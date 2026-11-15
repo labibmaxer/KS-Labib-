@@ -39,6 +39,7 @@ const SOCIAL: Record<string, { label: string; svg: string }> = {
 const MAIL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>';
 
 const DELAYS = ['', 'd1', 'd2', 'd3'];
+const initials = (n: string) => (String(n || '?').split(/\s+/).map((w) => w[0]).join('').slice(0, 2) || '?').toUpperCase();
 const heading = (cls: string) => `font-family:var(--fd);font-size:clamp(28px,4vw,48px);font-weight:700;letter-spacing:-.03em`;
 void heading;
 
@@ -118,6 +119,12 @@ export function heroHTML(h: Json): string {
       </div>
       <div class="hero-3d-col" aria-hidden="true">
         <div class="hero-3d-mount" id="hero3dMount"></div>
+        <div class="hero-photo">
+          <div class="hero-photo-frame">${h.photo
+            ? `<img src="${esc(h.photo)}" alt="${esc(h.photo_caption)}" onerror="this.style.display='none'">`
+            : `<div class="hero-photo-ph">${esc(initials(h.photo_caption || 'KS Labib'))}</div>`}</div>
+          <div class="hero-photo-chip"><b>${esc(h.photo_caption)}</b><span>${esc(h.photo_sub)}</span></div>
+        </div>
         ${cards.map((c: Json, i: number) => `<div class="h3d-card ${cls[i]}"><div class="h3d-card-n">${esc(c.n)}</div><div class="h3d-card-l">${esc(c.l)}</div></div>`).join('')}
         <div class="hero-3d-hint"><span class="hero-3d-dot"></span>${esc(h.hint)}</div>
       </div>
@@ -134,7 +141,6 @@ export function marqueeHTML(m: Json): string {
 
 /* ───────── ABOUT ───────── */
 const DECO = '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="160" height="120" rx="8" stroke="currentColor" stroke-width="1.5"/><line x1="20" y1="52" x2="180" y2="52" stroke="currentColor" stroke-width="1.5"/><circle cx="38" cy="40" r="5" stroke="currentColor" stroke-width="1.5"/><circle cx="56" cy="40" r="5" stroke="currentColor" stroke-width="1.5"/><circle cx="74" cy="40" r="5" stroke="currentColor" stroke-width="1.5"/><line x1="40" y1="76" x2="96" y2="76" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3"/><line x1="40" y1="90" x2="140" y2="90" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3"/><line x1="40" y1="104" x2="116" y2="104" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3"/></svg>';
-const initials = (n: string) => (String(n || '?').split(/\s+/).map((w) => w[0]).join('').slice(0, 2) || '?').toUpperCase();
 
 export function aboutHTML(a: Json): string {
   const link = a.link || {};

@@ -8,7 +8,7 @@ import JsonEditor, { ImageInput, uploadImage } from './JsonEditor';
 import './admin.css';
 
 type Json = any;
-type Tab = 'overview' | 'projects' | 'sections' | 'settings' | 'leads';
+type Tab = 'overview' | 'projects' | 'reviews' | 'sections' | 'settings' | 'leads';
 const sb = browserClient();
 const slugify = (s: string) => s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'project';
 const fmt = (d?: string) => (d ? new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '');
@@ -59,7 +59,7 @@ export default function AdminApp() {
     );
   }
 
-  const tabs: [Tab, string][] = [['overview', 'Overview'], ['projects', 'Projects'], ['sections', 'Sections'], ['settings', 'Settings'], ['leads', 'Leads']];
+  const tabs: [Tab, string][] = [['overview', 'Overview'], ['projects', 'Projects'], ['reviews', 'Reviews'], ['sections', 'Sections'], ['settings', 'Settings'], ['leads', 'Leads']];
   return (
     <div className="adm">
       <aside className="side">
@@ -75,6 +75,7 @@ export default function AdminApp() {
       <main className="main">
         {tab === 'overview' && <Overview go={setTab} />}
         {tab === 'projects' && <Projects say={say} publish={publish} />}
+        {tab === 'reviews' && <Reviews say={say} publish={publish} />}
         {tab === 'sections' && <Sections say={say} publish={publish} />}
         {tab === 'settings' && <Settings say={say} publish={publish} />}
         {tab === 'leads' && <Leads say={say} />}
@@ -142,6 +143,7 @@ function Overview({ go }: { go: (t: Tab) => void }) {
       </div>
       <div className="row-btns">
         <button className="btn-p" onClick={() => go('projects')}>+ Add project</button>
+        <button className="btn-s" onClick={() => go('reviews')}>+ Add review</button>
         <button className="btn-s" onClick={() => go('sections')}>Edit page sections</button>
         <button className="btn-s" onClick={() => go('settings')}>Edit contact &amp; SEO</button>
       </div>
@@ -247,15 +249,19 @@ function ProjectForm({ init, onClose, say, onSaved }: { init: Json; onClose: () 
             <div className="fld"><label className="lbl">Sort order (lower = first)</label><input className="in" type="number" value={p.sort_order ?? 0} onChange={(e) => set('sort_order', e.target.value)} /></div>
           </div>
           <label className="chk"><input type="checkbox" checked={!!p.featured} onChange={(e) => set('featured', e.target.checked)} /><span>Featured</span></label>
-          <details className="more"><summary>More: case-study text, gallery, testimonial, URL slug</summary>
-            {F('Challenge', 'challenge', true)}{F('My approach', 'approach', true)}{F('Outcome', 'outcome', true)}
-            <div className="fld"><label className="lbl">Gallery images ({gallery.length})</label>
-              <div className="gal">{gallery.map((g, i) => <div key={i} className="gal-i"><img src={g} alt="" /><button className="ico del" onClick={() => set('gallery', gallery.filter((_, n) => n !== i).join(', '))}>✕</button></div>)}</div>
-              <input type="file" accept="image/*" onChange={(e) => addGallery(e.target.files?.[0])} />
-            </div>
-            {F('Testimonial', 'testimonial', true)}{F('Testimonial author', 'testimonial_author')}
-            {F('URL slug (auto from title if empty)', 'slug', false, 'my-project')}
-          </details>
+          <div className="sect-t">Case study</div>
+          {F('The challenge', 'challenge', true, 'What problem did the client have?')}
+          {F('My approach', 'approach', true, 'How did you solve it?')}
+          {F('The outcome', 'outcome', true, 'What was the result?')}
+          <div className="fld"><label className="lbl">Gallery images ({gallery.length})</label>
+            <div className="gal">{gallery.map((g, i) => <div key={i} className="gal-i"><img src={g} alt="" /><button className="ico del" onClick={() => set('gallery', gallery.filter((_, n) => n !== i).join(', '))}>✕</button></div>)}</div>
+            <input className="in" value={p.gallery ?? ''} onChange={(e) => set('gallery', e.target.value)} placeholder="https://…, https://…  (comma separated URLs)" style={{ marginBottom: 8 }} />
+            <label className="btn-s" style={{ cursor: 'pointer' }}>Upload image<input type="file" accept="image/*" hidden onChange={(e) => addGallery(e.target.files?.[0])} /></label>
+          </div>
+          <div className="sect-t">Client testimonial</div>
+          <div className="two">{F('Client quote', 'testimonial', true, 'What did they say?')}{F('Quote author', 'testimonial_author', false, 'Name, Role')}</div>
+          <div className="sect-t">Advanced</div>
+          {F('URL slug (auto from title if empty)', 'slug', false, 'my-project')}
         </div>
         <div className="sheet-f"><button className="btn-s" onClick={onClose}>Cancel</button><button className="btn-p" disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Save project'}</button></div>
       </div>
@@ -413,6 +419,87 @@ function Leads({ say }: { say: (m: string, e?: boolean) => void }) {
           );
         })}</div>
       ) : <p className="muted">No leads yet.</p>}
+    </div>
+  );
+}
+
+/* ───────── Reviews ───────── */
+const EMPTY_REVIEW: Json = { name: '', role: '', rating: 5, quote: '', photo: '' };
+
+function Stars({ value, onChange }: { value: number; onChange?: (n: number) => void }) {
+  return (
+    <span className="stars">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button type="button" key={n} className={n <= value ? 'on' : ''} onClick={() => onChange?.(n)} disabled={!onChange} aria-label={`${n} stars`}>★</button>
+      ))}
+    </span>
+  );
+}
+
+function Reviews({ say, publish }: { say: (m: string, e?: boolean) => void; publish: (q?: boolean) => Promise<void> }) {
+  const [data, setData] = useState<Json | null>(null);
+  const [edit, setEdit] = useState<{ i: number; r: Json } | null>(null);
+  const load = useCallback(async () => {
+    const { data: row, error } = await sb.from('pf_sections').select('data').eq('id', 'reviews').maybeSingle();
+    if (error) say(error.message, true);
+    setData(merge(DEFAULT_SECTIONS.reviews, row?.data || {}));
+  }, [say]);
+  useEffect(() => { load(); }, [load]);
+
+  async function persist(items: Json[], msg: string) {
+    const next = { ...data, items };
+    const { data: cur } = await sb.from('pf_sections').select('visible').eq('id', 'reviews').maybeSingle();
+    const { error } = await sb.from('pf_sections').upsert({ id: 'reviews', data: next, visible: cur?.visible !== false, updated_at: new Date().toISOString() });
+    if (error) return say(error.message, true);
+    setData(next); say(msg); publish(true);
+  }
+  if (!data) return <p className="muted">Loading…</p>;
+  const items: Json[] = data.items || [];
+  const move = (i: number, d: number) => { const j = i + d; if (j < 0 || j >= items.length) return; const c = [...items]; [c[i], c[j]] = [c[j], c[i]]; persist(c, 'Order saved'); };
+  return (
+    <div>
+      <div className="head-row"><h1 className="h1">Reviews</h1><button className="btn-p" onClick={() => setEdit({ i: -1, r: { ...EMPTY_REVIEW } })}>+ Add review</button></div>
+      <p className="muted">Client name, role, star rating, comment and photo. Shows on the homepage under Reviews.</p>
+      {items.length ? (
+        <div className="list">{items.map((r, i) => (
+          <div className="li" key={i}>
+            <div className="li-main">
+              {r.photo ? <img className="thumb round" src={r.photo} alt="" /> : <div className="thumb round ph">{(r.name || '?')[0]}</div>}
+              <div><b>{r.name}</b> <span className="muted">{r.role}</span><div><Stars value={Number(r.rating) || 0} /></div><div className="muted sm clip">{r.quote}</div></div>
+            </div>
+            <div className="li-act">
+              <button className="ico" onClick={() => move(i, -1)}>↑</button><button className="ico" onClick={() => move(i, 1)}>↓</button>
+              <button className="btn-s" onClick={() => setEdit({ i, r: { ...EMPTY_REVIEW, ...r } })}>Edit</button>
+              <button className="btn-s del" onClick={() => confirm('Delete this review?') && persist(items.filter((_, n) => n !== i), 'Review deleted')}>Delete</button>
+            </div>
+          </div>
+        ))}</div>
+      ) : <p className="muted">No reviews yet — the homepage shows "Reviews coming soon" until you add one.</p>}
+      {edit && <ReviewForm init={edit.r} isNew={edit.i < 0} onClose={() => setEdit(null)} onSave={(r) => { const c = [...items]; if (edit.i < 0) c.push(r); else c[edit.i] = r; setEdit(null); persist(c, 'Review saved'); }} say={say} />}
+    </div>
+  );
+}
+
+function ReviewForm({ init, isNew, onClose, onSave, say }: { init: Json; isNew: boolean; onClose: () => void; onSave: (r: Json) => void; say: (m: string, e?: boolean) => void }) {
+  const [r, setR] = useState<Json>(init);
+  const set = (k: string, v: Json) => setR((x: Json) => ({ ...x, [k]: v }));
+  function submit() {
+    if (!r.name.trim() || !r.quote.trim()) return say('Name and comment are required', true);
+    onSave({ ...r, name: r.name.trim(), quote: r.quote.trim(), rating: Number(r.rating) || 5 });
+  }
+  return (
+    <div className="modal" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="sheet">
+        <div className="sheet-h"><h2>{isNew ? 'Add review' : 'Edit review'}</h2><button className="ico" onClick={onClose}>✕</button></div>
+        <div className="sheet-b">
+          <div className="fld"><label className="lbl">Star rating</label><Stars value={Number(r.rating) || 0} onChange={(n) => set('rating', n)} /></div>
+          <div className="fld"><label className="lbl">Client name *</label><input className="in" value={r.name} onChange={(e) => set('name', e.target.value)} /></div>
+          <div className="fld"><label className="lbl">Role / company</label><input className="in" value={r.role || ''} onChange={(e) => set('role', e.target.value)} placeholder="Founder, Accstora" /></div>
+          <div className="fld"><label className="lbl">Comment *</label><textarea className="in ta" rows={5} value={r.quote} onChange={(e) => set('quote', e.target.value)} /></div>
+          <div className="fld"><label className="lbl">Client photo</label><ImageInput value={r.photo || ''} onChange={(v) => set('photo', v)} /></div>
+        </div>
+        <div className="sheet-f"><button className="btn-s" onClick={onClose}>Cancel</button><button className="btn-p" onClick={submit}>Save review</button></div>
+      </div>
     </div>
   );
 }
