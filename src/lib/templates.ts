@@ -118,19 +118,19 @@ export function heroHTML(h: Json): string {
         </div>
       </div>
       <div class="hero-3d-col" aria-hidden="true">
-        <div class="idc" id="idc">
-          <div class="idc-swing" id="idc-swing">
-            <div class="idc-strap" aria-hidden="true"><span>${esc(h.photo_caption)} • ${esc(h.photo_sub)} • ${esc(h.photo_caption)} • ${esc(h.photo_sub)} • ${esc(h.photo_caption)} •</span></div>
-            <div class="idc-card" id="idc-card">
-              <div class="idc-clip" aria-hidden="true"></div>
-              <div class="idc-slot" aria-hidden="true"></div>
-              <div class="idc-top"><span>${esc(h.card_label)}</span><span>${esc(h.card_id)}</span></div>
-              <div class="idc-photo">${h.photo
+        <div class="pc" id="pc">
+          <div class="pc-tilt" id="pc-tilt">
+            <div class="pc-ring" aria-hidden="true"></div>
+            <div class="pc-frame">
+              ${h.photo
                 ? `<img src="${esc(h.photo)}" alt="${esc(h.photo_caption)}" draggable="false" onerror="this.style.display='none'">`
-                : `<div class="idc-ph">${esc(initials(h.photo_caption || 'KS Labib'))}</div>`}<i></i><i></i><i></i><i></i></div>
-              <div class="idc-role">${esc(h.photo_sub)}</div>
-              <div class="idc-name">${esc(h.photo_caption)}</div>
-              <div class="idc-bar" aria-hidden="true"></div>
+                : `<div class="pc-ph">${esc(initials(h.photo_caption || 'KS Labib'))}</div>`}
+              <div class="pc-shade" aria-hidden="true"></div>
+              <div class="pc-glare" aria-hidden="true"></div>
+              <div class="pc-chip">
+                <div class="pc-who"><b>${esc(h.photo_caption)}</b><span>${esc(h.photo_sub)}</span></div>
+                ${h.status ? `<span class="pc-status"><i></i>${esc(h.status)}</span>` : ''}
+              </div>
             </div>
           </div>
         </div>

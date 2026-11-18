@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { initMain } from '@/legacy/main.js';
 import { initHero } from '@/legacy/hero.js';
 import { initSub } from '@/legacy/sub.js';
-import { initLanyard } from '@/legacy/lanyard.js';
+import { initTilt } from '@/legacy/tilt.js';
 
 /** Boots the theme behaviours (loader, reveal, nav, cursor, 3D hero…). `mode` = home | sub */
 export default function LegacyInit({ mode = 'home', words = [] as string[], track = true }: { mode?: 'home' | 'sub'; words?: string[]; track?: boolean }) {
@@ -14,7 +14,7 @@ export default function LegacyInit({ mode = 'home', words = [] as string[], trac
     if (mode === 'home') {
       w.__HERO_WORDS = words;
       initMain();
-      initLanyard();
+      initTilt();
       initHero();
     } else {
       initSub();
