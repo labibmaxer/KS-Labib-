@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { initMain } from '@/legacy/main.js';
 import { initHero } from '@/legacy/hero.js';
 import { initSub } from '@/legacy/sub.js';
+import { initLanyard } from '@/legacy/lanyard.js';
 
 /** Boots the theme behaviours (loader, reveal, nav, cursor, 3D hero…). `mode` = home | sub */
 export default function LegacyInit({ mode = 'home', words = [] as string[], track = true }: { mode?: 'home' | 'sub'; words?: string[]; track?: boolean }) {
@@ -13,12 +14,7 @@ export default function LegacyInit({ mode = 'home', words = [] as string[], trac
     if (mode === 'home') {
       w.__HERO_WORDS = words;
       initMain();
-      const touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      if (!touch && !w.THREE) {
-        const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-        document.head.appendChild(s);
-      }
+      initLanyard();
       initHero();
     } else {
       initSub();

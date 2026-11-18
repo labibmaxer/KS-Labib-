@@ -58,10 +58,12 @@ export const DEFAULT_SECTIONS: Record<string, Json> = {
     cta1: { text: 'See My Work', href: '#projects' },
     cta2: { text: 'Hire Me →', href: '#contact' },
     note: '// Next.js · React · TypeScript · Supabase · Remote',
-    hint: 'move your cursor',
+    hint: 'drag the card',
     photo: '',
     photo_caption: 'KS Labib',
     photo_sub: 'Full-Stack Developer',
+    card_label: 'DEV PASS',
+    card_id: 'KSL-001',
     cards: [
       { n: '99+', l: 'Lighthouse score' },
       { n: '7d', l: 'Avg MVP delivery' },

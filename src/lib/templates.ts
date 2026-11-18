@@ -118,12 +118,21 @@ export function heroHTML(h: Json): string {
         </div>
       </div>
       <div class="hero-3d-col" aria-hidden="true">
-        <div class="hero-3d-mount" id="hero3dMount"></div>
-        <div class="hero-photo">
-          <div class="hero-photo-frame">${h.photo
-            ? `<img src="${esc(h.photo)}" alt="${esc(h.photo_caption)}" onerror="this.style.display='none'">`
-            : `<div class="hero-photo-ph">${esc(initials(h.photo_caption || 'KS Labib'))}</div>`}</div>
-          <div class="hero-photo-chip"><b>${esc(h.photo_caption)}</b><span>${esc(h.photo_sub)}</span></div>
+        <div class="idc" id="idc">
+          <div class="idc-swing" id="idc-swing">
+            <div class="idc-strap" aria-hidden="true"><span>${esc(h.photo_caption)} • ${esc(h.photo_sub)} • ${esc(h.photo_caption)} • ${esc(h.photo_sub)} • ${esc(h.photo_caption)} •</span></div>
+            <div class="idc-card" id="idc-card">
+              <div class="idc-clip" aria-hidden="true"></div>
+              <div class="idc-slot" aria-hidden="true"></div>
+              <div class="idc-top"><span>${esc(h.card_label)}</span><span>${esc(h.card_id)}</span></div>
+              <div class="idc-photo">${h.photo
+                ? `<img src="${esc(h.photo)}" alt="${esc(h.photo_caption)}" draggable="false" onerror="this.style.display='none'">`
+                : `<div class="idc-ph">${esc(initials(h.photo_caption || 'KS Labib'))}</div>`}<i></i><i></i><i></i><i></i></div>
+              <div class="idc-role">${esc(h.photo_sub)}</div>
+              <div class="idc-name">${esc(h.photo_caption)}</div>
+              <div class="idc-bar" aria-hidden="true"></div>
+            </div>
+          </div>
         </div>
         ${cards.map((c: Json, i: number) => `<div class="h3d-card ${cls[i]}"><div class="h3d-card-n">${esc(c.n)}</div><div class="h3d-card-l">${esc(c.l)}</div></div>`).join('')}
         <div class="hero-3d-hint"><span class="hero-3d-dot"></span>${esc(h.hint)}</div>
